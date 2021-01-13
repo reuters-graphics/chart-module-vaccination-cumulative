@@ -1,0 +1,37 @@
+@import '~@reuters-graphics/style-theme-eisbaer/scss/main';
+@import '~@reuters-graphics/style-color/scss/thematic/brand';
+
+$yellow: #EEC331;
+$gray: #999999;
+$bar-gray: #63686E;
+$tick: #CBCCCF;
+
+#{$CountryVaccination-container} {
+  /* Write your chart styles here */
+  .axis {
+    pointer-events: none;
+    text {
+      font-family: $font-family-sans-serif;
+      fill: $gray-400;
+      font-size: 0.875rem;
+    }
+
+    line,
+    path {
+      stroke: $gray-200;
+      stroke-width: 0.5;
+    }
+
+    path.domain {
+      display: none;
+    }
+  }
+  .axis .tick {
+    line {
+      stroke: $tick!important;
+    }
+    text {
+      fill: $gray!important;
+    }
+  }
+}
