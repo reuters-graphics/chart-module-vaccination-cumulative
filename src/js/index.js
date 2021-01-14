@@ -38,7 +38,9 @@ class CountryVaccination extends BaseChartComponent {
       countryISO: 'ISR',
       milestones: [0.1, 0.2, 0.3, 0.4, 0.5],
       text: {
-        milestone: '{{ number }}% of population'
+        milestone: '{{ number }}% of population',
+        milestoneMinor: '{{ number }}%',
+
       },
       milestoneStyle: {
         stroke: 'white',
@@ -201,8 +203,7 @@ class CountryVaccination extends BaseChartComponent {
         ms1.appendSelect('text')
           .attr('transform', `translate(0,${-10})`)
           .style('fill', props.milestoneStyle.textFill)
-          .text(Mustache.render(props.text.milestone, { number: milestones[milestoneIndex - 1] * 100 }));
-
+          .text(Mustache.render(props.text.milestoneMinor, { number: milestones[milestoneIndex - 1] * 100 }));
       }
 
       return this; // Generally, always return the chart class from draw!
