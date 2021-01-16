@@ -3046,7 +3046,7 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
 
     _defineProperty(_assertThisInitialized(_this), "defaultProps", {
       strokeWidth: 2,
-      aspectHeight: 0.7,
+      height: 300,
       margin: {
         top: 20,
         right: 60,
@@ -3103,15 +3103,13 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       }
 
       var milestones = props.milestones;
-      console.log(milestones);
       var popMilestones = milestones.map(function (d) {
         return pop * d * 2;
       });
-      console.log(popMilestones);
       data.forEach(function (d) {
         d.parsedDate = parseDate(d.date);
       });
-      var dateOffset = 24 * 60 * 60 * 1000 * 1; //1 day
+      var dateOffset = 24 * 60 * 60 * 1000 * 1; // 1 day
 
       var zeroDate = new Date();
       zeroDate.setTime(data[0].parsedDate.getTime() - dateOffset);
@@ -3128,7 +3126,7 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
 
 
       var width = containerWidth - margin.left - margin.right;
-      var height = containerWidth * props.aspectHeight - margin.top - margin.bottom;
+      var height = props.height - margin.top - margin.bottom;
       var startDate;
 
       if (props.dateRange.start) {
@@ -3167,7 +3165,7 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       }) // set the x values for the line generator
       .y(function (d) {
         return yScale(d.count);
-      }) // set the y values for the line generator 
+      }) // set the y values for the line generator
       .curve(d3.curveStep); // apply smoothing to the line
 
       xAxis.attr('transform', "translate(0,".concat(height, ")")).call(d3.axisBottom(xScale).ticks(2));

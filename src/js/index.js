@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+
 import AtlasMetadataClient from '@reuters-graphics/graphics-atlas-client';
 import BaseChartComponent from './baseClasses/ChartComponent';
 import Mustache from 'mustache';
@@ -18,7 +19,7 @@ class CountryVaccination extends BaseChartComponent {
      */
     defaultProps = {
       strokeWidth: 2,
-      aspectHeight: 0.7,
+      height: 300,
       margin: {
         top: 20,
         right: 60,
@@ -45,7 +46,7 @@ class CountryVaccination extends BaseChartComponent {
       milestoneStyle: {
         stroke: 'white',
         'stroke-dasharray': '4',
-        textFill: 'rgba(255,255,255,.5)'
+        textFill: 'rgba(255,255,255,.5)',
       },
     };
 
@@ -67,34 +68,34 @@ class CountryVaccination extends BaseChartComponent {
       const parseDate = d3.timeParse('%Y-%m-%d');
       const dateAxisFormat = d3.timeFormat(props.format.dateAxis);
       const formatNumber = d3.format(props.format.number);
-      const getCountry = client.getCountry(props.countryISO)
+      const getCountry = client.getCountry(props.countryISO);
       let pop = 0;
       if (getCountry) {
-        pop = getCountry.dataProfile.population.d
+        pop = getCountry.dataProfile.population.d;
       }
       const { milestones } = props;
-      console.log(milestones)
-      const popMilestones = milestones.map((d) => (pop*d) * 2);
-      console.log(popMilestones)
+
+      const popMilestones = milestones.map((d) => (pop * d) * 2);
+
       data.forEach(function(d) {
         d.parsedDate = parseDate(d.date);
       });
-      let dateOffset = (24*60*60*1000) * 1; //1 day
-      let zeroDate = new Date();
+      const dateOffset = (24 * 60 * 60 * 1000) * 1; // 1 day
+      const zeroDate = new Date();
       zeroDate.setTime(data[0].parsedDate.getTime() - dateOffset);
 
       data.unshift({
         date: d3.timeFormat('%Y-%m-%d')(zeroDate),
         parsedDate: zeroDate,
         count: 0,
-      })
+      });
       const { margin } = props;
 
       const node = this.selection().node();
       const { width: containerWidth } = node.getBoundingClientRect(); // Respect the width of your container!
 
       const width = containerWidth - margin.left - margin.right;
-      const height = (containerWidth * props.aspectHeight) - margin.top - margin.bottom;
+      const height = props.height - margin.top - margin.bottom;
       let startDate;
       if (props.dateRange.start) {
         startDate = parseDate(props.dateRange.start);
@@ -104,11 +105,11 @@ class CountryVaccination extends BaseChartComponent {
 
       let useMilestone, useMilestonePer, milestoneIndex;
       const maxValue = d3.max(data, d => d.count);
-      for (let i = popMilestones.length - 1; i >= 0 ; i--) {
+      for (let i = popMilestones.length - 1; i >= 0; i--) {
         if (popMilestones[i] > maxValue) {
           useMilestone = popMilestones[i];
           useMilestonePer = milestones[i];
-          milestoneIndex = i
+          milestoneIndex = i;
         }
       }
 
@@ -118,7 +119,7 @@ class CountryVaccination extends BaseChartComponent {
 
       const yScale = d3.scaleLinear()
         .rangeRound([height, 0])
-        .domain([0, useMilestone*1.05]);
+        .domain([0, useMilestone * 1.05]);
 
       const transition = d3.transition()
         .duration(500);
@@ -137,8 +138,8 @@ class CountryVaccination extends BaseChartComponent {
       const yAxis = plot.appendSelect('g.axis.y');
       const line = d3.line()
         .x(function(d) { return xScale(d.parsedDate); }) // set the x values for the line generator
-        .y(function(d) { return yScale(d.count); }) // set the y values for the line generator 
-        .curve(d3.curveStep) // apply smoothing to the line
+        .y(function(d) { return yScale(d.count); }) // set the y values for the line generator
+        .curve(d3.curveStep); // apply smoothing to the line
 
       xAxis.attr('transform', `translate(0,${height})`)
         .call(
@@ -167,12 +168,12 @@ class CountryVaccination extends BaseChartComponent {
         .attr('d', line(data))
         .style('fill', 'none')
         .style('stroke', props.stroke)
-        .style('stroke-width', props.strokeWidth)
+        .style('stroke-width', props.strokeWidth);
 
-      const milestoneG = plot.appendSelect('g.milestone-group')
+      const milestoneG = plot.appendSelect('g.milestone-group');
 
       const ms0 = milestoneG.appendSelect('g.milestone-0')
-        .attr('transform',`translate(0, ${yScale(useMilestone)})`)
+        .attr('transform', `translate(0, ${yScale(useMilestone)})`);
 
       ms0.appendSelect('line')
         .style('stroke', props.milestoneStyle.stroke)
@@ -180,17 +181,16 @@ class CountryVaccination extends BaseChartComponent {
         .attr('x1', 0)
         .attr('x2', width)
         .attr('y1', 0)
-        .attr('y2', 0)
+        .attr('y2', 0);
 
       ms0.appendSelect('text')
         .attr('transform', `translate(0,${-10})`)
         .style('fill', props.milestoneStyle.textFill)
-        .text(Mustache.render(props.text.milestone, { number: useMilestonePer*100 }))
+        .text(Mustache.render(props.text.milestone, { number: useMilestonePer * 100 }));
 
-
-      if (milestoneIndex>0) {
+      if (milestoneIndex > 0) {
         const ms1 = milestoneG.appendSelect('g.milestone-1')
-          .attr('transform', `translate(0, ${yScale(popMilestones[milestoneIndex - 1])})`)
+          .attr('transform', `translate(0, ${yScale(popMilestones[milestoneIndex - 1])})`);
 
         ms1.appendSelect('line')
           .style('stroke', props.milestoneStyle.stroke)
