@@ -3111,6 +3111,19 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       data.forEach(function (d) {
         d.parsedDate = parseDate(d.date);
       });
+
+      if (data.length == 1) {
+        var dateOffset = 24 * 60 * 60 * 1000 * 1; // 1 day
+
+        var zeroDate = new Date();
+        zeroDate.setTime(data[0].parsedDate.getTime() - dateOffset);
+        data.unshift({
+          date: d3.timeFormat('%Y-%m-%d')(zeroDate),
+          parsedDate: zeroDate,
+          count: 0
+        });
+      }
+
       var margin = props.margin;
       var node = this.selection().node();
 
@@ -3166,25 +3179,30 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
         return yScale(d.count);
       }) // set the y values for the line generator
       .y0(yScale(0)) // set the y values for the line generator
-      .curve(d3.curveStepBefore); // apply smoothing to the line
+      .curve(d3.curveStepAfter); // apply smoothing to the line
 
       var numberTicks = [],
           dateTicks = []; // ticks section
 
-      if (data.length < 7) {
+      if (data.length < 7 && data.length % 2 != 0 && data[0].count > 0) {
         dateTicks.push(startDate);
         dateTicks.push(endDate);
         numberTicks.push(dateDiff + 1);
+      } else if (data[0].count == 0) {
+        dateTicks.push(startDate);
+        dateTicks.push(endDate);
+        numberTicks.push(dateDiff);
+        xScaleNum.domain([0, 1]);
       } else {
         dateTicks.push(startDate);
-        dateTicks.push(new Date(startDate.getTime() + (dateDiff / 2 + 1) * (24 * 60 * 60 * 1000)));
+        dateTicks.push(new Date(startDate.getTime() + Math.floor(dateDiff / 2 + 1) * (24 * 60 * 60 * 1000)));
         dateTicks.push(endDate);
         numberTicks.push(dateDiff + 1);
-        numberTicks.push(dateDiff / 2 + 2);
+        numberTicks.push(Math.floor(dateDiff / 2 + 2));
       }
 
       xAxis.attr('transform', "translate(0,".concat(height, ")")).call(d3.axisBottom(xScale).tickValues(dateTicks).tickFormat(dateAxisFormat));
-      xAxisNum.attr('transform', "translate(0,".concat(height + margin.axis, ")")).call(d3.axisBottom(xScaleNum).tickValues(numberTicks));
+      xAxisNum.attr('transform', "translate(0,".concat(height + margin.axis, ")")).call(d3.axisBottom(xScaleNum).tickValues(numberTicks).tickFormat(d3.format(props.format.number)));
       yAxis.attr('transform', "translate(".concat(width, ", 0)")).call(d3.axisRight(yScale).tickFormat(function (d) {
         return formatNumber(d);
       }).ticks(4) // .tickSize(-width - margin.right)

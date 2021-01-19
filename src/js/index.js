@@ -82,6 +82,18 @@ class CountryVaccination extends BaseChartComponent {
         d.parsedDate = parseDate(d.date);
       });
 
+      if (data.length==1){
+        const dateOffset = (24 * 60 * 60 * 1000) * 1; // 1 day
+        const zeroDate = new Date();
+        zeroDate.setTime(data[0].parsedDate.getTime() - dateOffset);
+
+        data.unshift({
+          date: d3.timeFormat('%Y-%m-%d')(zeroDate),
+          parsedDate: zeroDate,
+          count: 0,
+        });
+      }
+
       const { margin } = props;
 
       const node = this.selection().node();
@@ -143,20 +155,25 @@ class CountryVaccination extends BaseChartComponent {
         .x(function(d) { return xScale(d.parsedDate); }) // set the x values for the line generator
         .y1(function(d) { return yScale(d.count); }) // set the y values for the line generator
         .y0(yScale(0)) // set the y values for the line generator
-        .curve(d3.curveStepBefore); // apply smoothing to the line
+        .curve(d3.curveStepAfter); // apply smoothing to the line
 
       const numberTicks=[], dateTicks=[];
       // ticks section
-      if (data.length<7) {
+      if (data.length<7 && data.length%2!=0 && data[0].count>0) {
         dateTicks.push(startDate);
         dateTicks.push(endDate);
         numberTicks.push(dateDiff+1);
-      } else {
+      } else if (data[0].count==0) {
         dateTicks.push(startDate);
-        dateTicks.push(new Date(startDate.getTime() + (((dateDiff / 2) +1) * (24 * 60 * 60 * 1000))));
+        dateTicks.push(endDate);
+        numberTicks.push(dateDiff);
+        xScaleNum.domain([0,1])
+      }else {
+        dateTicks.push(startDate);
+        dateTicks.push(new Date(startDate.getTime() + (Math.floor((dateDiff / 2) +1) * (24 * 60 * 60 * 1000))));
         dateTicks.push(endDate);
         numberTicks.push(dateDiff+1);
-        numberTicks.push(dateDiff / 2 + 2);
+        numberTicks.push(Math.floor(dateDiff / 2 + 2));
       }
 
       xAxis.attr('transform', `translate(0,${height})`)
@@ -170,6 +187,7 @@ class CountryVaccination extends BaseChartComponent {
         .call(
           d3.axisBottom(xScaleNum)
             .tickValues(numberTicks)
+            .tickFormat(d3.format(props.format.number))
         );
 
       yAxis.attr('transform', `translate(${width}, 0)`)

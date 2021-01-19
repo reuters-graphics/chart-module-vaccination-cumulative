@@ -20,7 +20,53 @@ const chart = new CountryVaccination();
 chart
   .selection('#chart')
   .data([1, 2, 3])
-  .props({ stroke: 'orange' })
+  .props({
+      // Area stroke
+      strokeWidth: 2,
+
+      // Chart height
+      height: 300,
+
+      // Margins
+      margin: {
+        top: 20,
+        right: 60,
+        bottom: 60,
+        left: 20,
+        // Gap between the two x axis
+        axis: 25,
+      },
+      dateRange: {
+        // start: '2020-01-01',
+      },
+      format: {
+        // Axis date format
+        dateAxis: '%b %e',
+        // Axis number of days format
+        number: '~s',
+      },
+      // Area fill
+      areaFill: 'rgba(238, 195, 49,.6)',
+      // Area stroke
+      stroke: '#EEC331',
+      // Variable to plot
+      variable: 'totalDoses',
+      // ISO of country
+      countryISO: 'ISR',
+      // Array of milestones to check
+      milestones: [.05, 0.1, 0.2, 0.3, 0.4, 0.5],
+      // Text
+      text: {
+        milestone: '{{ number }}% of population',
+        milestoneMinor: '{{ number }}%',
+        daysLabel: 'Days since first reported dose'
+      },
+      // Styles for milestone elements
+      milestoneStyle: {
+        stroke: 'white',
+        'stroke-dasharray': '4',
+        textFill: 'rgba(255,255,255,.5)',
+      },})
   .draw();
 
 // You can call any method again to update the chart.
