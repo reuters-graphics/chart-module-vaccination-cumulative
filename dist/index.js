@@ -3050,23 +3050,25 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       margin: {
         top: 20,
         right: 60,
-        bottom: 40,
+        bottom: 60,
+        axis: 25,
         left: 20
       },
       dateRange: {// start: '2020-01-01',
       },
       format: {
-        dateAxis: '%b',
+        dateAxis: '%b %e',
         number: '~s'
       },
+      areaFill: 'rgba(238, 195, 49,.6)',
       stroke: '#EEC331',
-      baseStroke: '#CBCCCF',
       variable: 'totalDoses',
       countryISO: 'ISR',
-      milestones: [0.1, 0.2, 0.3, 0.4, 0.5],
+      milestones: [.05, 0.1, 0.2, 0.3, 0.4, 0.5],
       text: {
         milestone: '{{ number }}% of population',
-        milestoneMinor: '{{ number }}%'
+        milestoneMinor: '{{ number }}%',
+        daysLabel: 'Days since first reported dose'
       },
       milestoneStyle: {
         stroke: 'white',
@@ -3109,15 +3111,6 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       data.forEach(function (d) {
         d.parsedDate = parseDate(d.date);
       });
-      var dateOffset = 24 * 60 * 60 * 1000 * 1; // 1 day
-
-      var zeroDate = new Date();
-      zeroDate.setTime(data[0].parsedDate.getTime() - dateOffset);
-      data.unshift({
-        date: d3.timeFormat('%Y-%m-%d')(zeroDate),
-        parsedDate: zeroDate,
-        count: 0
-      });
       var margin = props.margin;
       var node = this.selection().node();
 
@@ -3137,6 +3130,12 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
         });
       }
 
+      var endDate = d3.max(data, function (d) {
+        return d.parsedDate;
+      }); // some date
+
+      var dateDiff = Math.abs(endDate - startDate) / (24 * 60 * 60 * 1000); // difference in milliseconds
+
       var useMilestone, useMilestonePer, milestoneIndex;
       var maxValue = d3.max(data, function (d) {
         return d.count;
@@ -3150,34 +3149,48 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
         }
       }
 
-      var xScale = d3.scaleTime().rangeRound([0, width]).domain([startDate, d3.max(data, function (d) {
-        return d.parsedDate;
-      })]);
+      var xScale = d3.scaleTime().rangeRound([0, width]).domain([startDate, endDate]);
+      var xScaleNum = d3.scaleLinear().rangeRound([0, width]).domain([1, dateDiff + 1]);
       var yScale = d3.scaleLinear().rangeRound([height, 0]).domain([0, useMilestone * 1.05]);
       var transition = d3.transition().duration(500);
       this.svg = this.selection().appendSelect('svg') // 👈 Use appendSelect instead of append for non-data-bound elements!
       .attr('width', width + margin.left + margin.right).attr('height', height + margin.top + margin.bottom);
       var plot = this.svg.appendSelect('g').classed('plot', true).attr('transform', "translate(".concat(margin.left, ",").concat(margin.top, ")"));
       var xAxis = plot.appendSelect('g.axis.x');
+      var xAxisNum = plot.appendSelect('g.axis.x.x-number');
       var yAxis = plot.appendSelect('g.axis.y');
-      var line = d3.line().x(function (d) {
+      var area = d3.area().x(function (d) {
         return xScale(d.parsedDate);
       }) // set the x values for the line generator
-      .y(function (d) {
+      .y1(function (d) {
         return yScale(d.count);
       }) // set the y values for the line generator
-      .curve(d3.curveStep); // apply smoothing to the line
+      .y0(yScale(0)) // set the y values for the line generator
+      .curve(d3.curveStepBefore); // apply smoothing to the line
 
-      xAxis.attr('transform', "translate(0,".concat(height, ")")).call(d3.axisBottom(xScale).ticks(2));
+      var numberTicks = [],
+          dateTicks = []; // ticks section
+
+      if (data.length < 7) {
+        dateTicks.push(startDate);
+        dateTicks.push(endDate);
+        numberTicks.push(dateDiff + 1);
+      } else {
+        dateTicks.push(startDate);
+        dateTicks.push(new Date(startDate.getTime() + (dateDiff / 2 + 1) * (24 * 60 * 60 * 1000)));
+        dateTicks.push(endDate);
+        numberTicks.push(dateDiff + 1);
+        numberTicks.push(dateDiff / 2 + 2);
+      }
+
+      xAxis.attr('transform', "translate(0,".concat(height, ")")).call(d3.axisBottom(xScale).tickValues(dateTicks).tickFormat(dateAxisFormat));
+      xAxisNum.attr('transform', "translate(0,".concat(height + margin.axis, ")")).call(d3.axisBottom(xScaleNum).tickValues(numberTicks));
       yAxis.attr('transform', "translate(".concat(width, ", 0)")).call(d3.axisRight(yScale).tickFormat(function (d) {
         return formatNumber(d);
       }).ticks(4) // .tickSize(-width - margin.right)
       );
-      plot.appendSelect('line.base-line').attr('x1', 0).attr('x2', width).attr('y1', height).attr('y2', height).style('stroke', props.baseStroke); // We're using d3's new data join method here.
-      // Read more about that here: https://observablehq.com/@d3/selection-join
-      // ... or feel free to use the old, reliable General Update Pattern.
-
-      plot.appendSelect('path.vaccinations-line').attr('d', line(data)).style('fill', 'none').style('stroke', props.stroke).style('stroke-width', props.strokeWidth);
+      this.selection().appendSelect('div.days-label').style('bottom', "".concat(5, "px")).style('left', "".concat(0, "px")).text(props.text.daysLabel);
+      plot.appendSelect('path.vaccinations-line').attr('d', area(data)).style('fill', props.areaFill).style('stroke', props.stroke).style('stroke-width', props.strokeWidth);
       var milestoneG = plot.appendSelect('g.milestone-group');
       var ms0 = milestoneG.appendSelect('g.milestone-0').attr('transform', "translate(0, ".concat(yScale(useMilestone), ")"));
       ms0.appendSelect('line').style('stroke', props.milestoneStyle.stroke).style('stroke-dasharray', props.milestoneStyle['stroke-dasharray']).attr('x1', 0).attr('x2', width).attr('y1', 0).attr('y2', 0);
@@ -3191,6 +3204,8 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
         ms1.appendSelect('text').attr('transform', "translate(0,".concat(-10, ")")).style('fill', props.milestoneStyle.textFill).text(Mustache__default['default'].render(props.text.milestoneMinor, {
           number: milestones[milestoneIndex - 1] * 100
         }));
+      } else {
+        milestoneG.selectAll('.milestone-1').remove();
       }
 
       return this; // Generally, always return the chart class from draw!

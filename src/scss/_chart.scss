@@ -1,19 +1,36 @@
 @import '~@reuters-graphics/style-theme-eisbaer/scss/main';
 @import '~@reuters-graphics/style-color/scss/thematic/brand';
 
-$yellow: #EEC331;
 $gray: #999999;
 $bar-gray: #63686E;
 $tick: #CBCCCF;
 
 #{$CountryVaccination-container} {
+  position: relative;
   /* Write your chart styles here */
+  .days-label{
+     font-family: $font-family-sans-serif;
+    font-size: 13px;
+    line-height: 15px;
+    font-weight: 300;
+    letter-spacing: 0.4px;
+    font-weight: 200;
+    color: #999;
+    fill: #999;
+    position: absolute;
+    width: 100px;
+  }
   .axis {
     pointer-events: none;
     text {
       font-family: $font-family-sans-serif;
-      fill: $gray-400;
-      font-size: 0.875rem;
+      font-size: 13px;
+      line-height: 18px;
+      font-weight: 300;
+      letter-spacing: 0.4px;
+      font-weight: 200;
+      color: #999;
+      fill: #999;
     }
 
     line,
@@ -33,5 +50,13 @@ $tick: #CBCCCF;
     text {
       fill: $gray!important;
     }
+  }
+  .milestone-group{
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 400;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.75);
+    fill: rgba(255, 255, 255, 0.75);
   }
 }

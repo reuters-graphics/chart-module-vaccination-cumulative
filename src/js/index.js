@@ -23,25 +23,26 @@ class CountryVaccination extends BaseChartComponent {
       margin: {
         top: 20,
         right: 60,
-        bottom: 40,
+        bottom: 60,
+        axis: 25,
         left: 20,
       },
       dateRange: {
         // start: '2020-01-01',
       },
       format: {
-        dateAxis: '%b',
+        dateAxis: '%b %e',
         number: '~s',
       },
+      areaFill: 'rgba(238, 195, 49,.6)',
       stroke: '#EEC331',
-      baseStroke: '#CBCCCF',
       variable: 'totalDoses',
       countryISO: 'ISR',
-      milestones: [0.1, 0.2, 0.3, 0.4, 0.5],
+      milestones: [.05, 0.1, 0.2, 0.3, 0.4, 0.5],
       text: {
         milestone: '{{ number }}% of population',
         milestoneMinor: '{{ number }}%',
-
+        daysLabel: 'Days since first reported dose'
       },
       milestoneStyle: {
         stroke: 'white',
@@ -80,15 +81,7 @@ class CountryVaccination extends BaseChartComponent {
       data.forEach(function(d) {
         d.parsedDate = parseDate(d.date);
       });
-      const dateOffset = (24 * 60 * 60 * 1000) * 1; // 1 day
-      const zeroDate = new Date();
-      zeroDate.setTime(data[0].parsedDate.getTime() - dateOffset);
 
-      data.unshift({
-        date: d3.timeFormat('%Y-%m-%d')(zeroDate),
-        parsedDate: zeroDate,
-        count: 0,
-      });
       const { margin } = props;
 
       const node = this.selection().node();
@@ -97,11 +90,15 @@ class CountryVaccination extends BaseChartComponent {
       const width = containerWidth - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
       let startDate;
+
       if (props.dateRange.start) {
         startDate = parseDate(props.dateRange.start);
       } else {
         startDate = d3.min(data, d => d.parsedDate);
       }
+
+      var endDate = d3.max(data, d => d.parsedDate); // some date
+      var dateDiff = Math.abs(endDate - startDate)/(24*60*60*1000); // difference in milliseconds
 
       let useMilestone, useMilestonePer, milestoneIndex;
       const maxValue = d3.max(data, d => d.count);
@@ -115,7 +112,11 @@ class CountryVaccination extends BaseChartComponent {
 
       const xScale = d3.scaleTime()
         .rangeRound([0, width])
-        .domain([startDate, d3.max(data, d => d.parsedDate)]);
+        .domain([startDate, endDate]);
+
+      const xScaleNum = d3.scaleLinear()
+        .rangeRound([0, width])
+        .domain([1,dateDiff+1]);
 
       const yScale = d3.scaleLinear()
         .rangeRound([height, 0])
@@ -135,16 +136,40 @@ class CountryVaccination extends BaseChartComponent {
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
       const xAxis = plot.appendSelect('g.axis.x');
+
+      const xAxisNum = plot.appendSelect('g.axis.x.x-number');
       const yAxis = plot.appendSelect('g.axis.y');
-      const line = d3.line()
+      const area = d3.area()
         .x(function(d) { return xScale(d.parsedDate); }) // set the x values for the line generator
-        .y(function(d) { return yScale(d.count); }) // set the y values for the line generator
-        .curve(d3.curveStep); // apply smoothing to the line
+        .y1(function(d) { return yScale(d.count); }) // set the y values for the line generator
+        .y0(yScale(0)) // set the y values for the line generator
+        .curve(d3.curveStepBefore); // apply smoothing to the line
+
+      const numberTicks=[], dateTicks=[];
+      // ticks section
+      if (data.length<7) {
+        dateTicks.push(startDate);
+        dateTicks.push(endDate);
+        numberTicks.push(dateDiff+1);
+      } else {
+        dateTicks.push(startDate);
+        dateTicks.push(new Date(startDate.getTime() + (((dateDiff / 2) +1) * (24 * 60 * 60 * 1000))));
+        dateTicks.push(endDate);
+        numberTicks.push(dateDiff+1);
+        numberTicks.push(dateDiff / 2 + 2);
+      }
 
       xAxis.attr('transform', `translate(0,${height})`)
         .call(
           d3.axisBottom(xScale)
-            .ticks(2)
+            .tickValues(dateTicks)
+            .tickFormat(dateAxisFormat)
+        );
+
+      xAxisNum.attr('transform', `translate(0,${height+margin.axis})`)
+        .call(
+          d3.axisBottom(xScaleNum)
+            .tickValues(numberTicks)
         );
 
       yAxis.attr('transform', `translate(${width}, 0)`)
@@ -155,18 +180,14 @@ class CountryVaccination extends BaseChartComponent {
           // .tickSize(-width - margin.right)
         );
 
-      plot.appendSelect('line.base-line')
-        .attr('x1', 0)
-        .attr('x2', width)
-        .attr('y1', height)
-        .attr('y2', height)
-        .style('stroke', props.baseStroke);
-      // We're using d3's new data join method here.
-      // Read more about that here: https://observablehq.com/@d3/selection-join
-      // ... or feel free to use the old, reliable General Update Pattern.
+      this.selection().appendSelect('div.days-label')
+        .style('bottom', `${5}px`)
+        .style('left', `${0}px`)
+        .text(props.text.daysLabel);
+
       plot.appendSelect('path.vaccinations-line')
-        .attr('d', line(data))
-        .style('fill', 'none')
+        .attr('d', area(data))
+        .style('fill', props.areaFill)
         .style('stroke', props.stroke)
         .style('stroke-width', props.strokeWidth);
 
@@ -204,6 +225,8 @@ class CountryVaccination extends BaseChartComponent {
           .attr('transform', `translate(0,${-10})`)
           .style('fill', props.milestoneStyle.textFill)
           .text(Mustache.render(props.text.milestoneMinor, { number: milestones[milestoneIndex - 1] * 100 }));
+      } else {
+        milestoneG.selectAll('.milestone-1').remove();
       }
 
       return this; // Generally, always return the chart class from draw!
