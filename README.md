@@ -21,9 +21,6 @@ chart
   .selection('#chart')
   .data([1, 2, 3])
   .props({
-      // Area stroke
-      strokeWidth: 2,
-
       // Chart height
       height: 300,
 
@@ -45,9 +42,12 @@ chart
         // Axis number of days format
         number: '~s',
       },
+
       // Area fill
       areaFill: 'rgba(238, 195, 49,.6)',
       // Area stroke
+      strokeWidth: 2,
+      // Area stroke color
       stroke: '#EEC331',
       // Variable to plot
       variable: 'totalDoses',
@@ -64,7 +64,7 @@ chart
       // Styles for milestone elements
       milestoneStyle: {
         stroke: 'white',
-        'stroke-dasharray': '4',
+        'stroke-dasharray': '5 5',
         textFill: 'rgba(255,255,255,.5)',
       },})
   .draw();

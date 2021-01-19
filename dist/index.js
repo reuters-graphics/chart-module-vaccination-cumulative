@@ -3045,14 +3045,13 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
     _this = _super.call.apply(_super, [this].concat(args));
 
     _defineProperty(_assertThisInitialized(_this), "defaultProps", {
-      strokeWidth: 2,
       height: 300,
       margin: {
         top: 20,
         right: 60,
         bottom: 60,
         axis: 25,
-        left: 20
+        left: 0
       },
       dateRange: {// start: '2020-01-01',
       },
@@ -3062,17 +3061,18 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       },
       areaFill: 'rgba(238, 195, 49,.6)',
       stroke: '#EEC331',
+      strokeWidth: 3,
       variable: 'totalDoses',
       countryISO: 'ISR',
       milestones: [.05, 0.1, 0.2, 0.3, 0.4, 0.5],
       text: {
         milestone: '{{ number }}% of population',
         milestoneMinor: '{{ number }}%',
-        daysLabel: 'Days since first reported dose'
+        daysLabel: 'No. of days'
       },
       milestoneStyle: {
         stroke: 'white',
-        'stroke-dasharray': '4',
+        'stroke-dasharray': '5 5',
         textFill: 'rgba(255,255,255,.5)'
       }
     });
@@ -3181,6 +3181,14 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       .y0(yScale(0)) // set the y values for the line generator
       .curve(d3.curveStepAfter); // apply smoothing to the line
 
+      var line = d3.line().x(function (d) {
+        return xScale(d.parsedDate);
+      }) // set the x values for the line generator
+      .y(function (d) {
+        return yScale(d.count);
+      }) // set the y values for the line generator
+      .curve(d3.curveStepAfter); // apply smoothing to the line
+
       var numberTicks = [],
           dateTicks = []; // ticks section
 
@@ -3202,13 +3210,17 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       }
 
       xAxis.attr('transform', "translate(0,".concat(height, ")")).call(d3.axisBottom(xScale).tickValues(dateTicks).tickFormat(dateAxisFormat));
+      xAxis.selectAll('.tick').filter(function (d, i) {
+        return i == 0;
+      }).select('text').attr('text-anchor', 'start');
       xAxisNum.attr('transform', "translate(0,".concat(height + margin.axis, ")")).call(d3.axisBottom(xScaleNum).tickValues(numberTicks).tickFormat(d3.format(props.format.number)));
       yAxis.attr('transform', "translate(".concat(width, ", 0)")).call(d3.axisRight(yScale).tickFormat(function (d) {
         return formatNumber(d);
-      }).ticks(4) // .tickSize(-width - margin.right)
+      }).ticks(3) // .tickSize(-width - margin.right)
       );
-      this.selection().appendSelect('div.days-label').style('bottom', "".concat(5, "px")).style('left', "".concat(0, "px")).text(props.text.daysLabel);
-      plot.appendSelect('path.vaccinations-line').attr('d', area(data)).style('fill', props.areaFill).style('stroke', props.stroke).style('stroke-width', props.strokeWidth);
+      this.selection().appendSelect('div.days-label').style('bottom', "".concat(17, "px")).style('left', "".concat(0, "px")).text(props.text.daysLabel);
+      plot.appendSelect('path.vaccinations-area').attr('d', area(data)).style('fill', props.areaFill);
+      plot.appendSelect('path.vaccinations-line').attr('d', line(data)).style('fill', 'none').style('stroke', props.stroke).style('stroke-width', props.strokeWidth);
       var milestoneG = plot.appendSelect('g.milestone-group');
       var ms0 = milestoneG.appendSelect('g.milestone-0').attr('transform', "translate(0, ".concat(yScale(useMilestone), ")"));
       ms0.appendSelect('line').style('stroke', props.milestoneStyle.stroke).style('stroke-dasharray', props.milestoneStyle['stroke-dasharray']).attr('x1', 0).attr('x2', width).attr('y1', 0).attr('y2', 0);

@@ -18,14 +18,13 @@ class CountryVaccination extends BaseChartComponent {
      * functions that can get properties from your data.
      */
     defaultProps = {
-      strokeWidth: 2,
       height: 300,
       margin: {
         top: 20,
         right: 60,
         bottom: 60,
         axis: 25,
-        left: 20,
+        left: 0,
       },
       dateRange: {
         // start: '2020-01-01',
@@ -36,17 +35,18 @@ class CountryVaccination extends BaseChartComponent {
       },
       areaFill: 'rgba(238, 195, 49,.6)',
       stroke: '#EEC331',
+      strokeWidth: 3,
       variable: 'totalDoses',
       countryISO: 'ISR',
       milestones: [.05, 0.1, 0.2, 0.3, 0.4, 0.5],
       text: {
         milestone: '{{ number }}% of population',
         milestoneMinor: '{{ number }}%',
-        daysLabel: 'Days since first reported dose'
+        daysLabel: 'No. of days',
       },
       milestoneStyle: {
         stroke: 'white',
-        'stroke-dasharray': '4',
+        'stroke-dasharray': '5 5',
         textFill: 'rgba(255,255,255,.5)',
       },
     };
@@ -82,7 +82,7 @@ class CountryVaccination extends BaseChartComponent {
         d.parsedDate = parseDate(d.date);
       });
 
-      if (data.length==1){
+      if (data.length == 1) {
         const dateOffset = (24 * 60 * 60 * 1000) * 1; // 1 day
         const zeroDate = new Date();
         zeroDate.setTime(data[0].parsedDate.getTime() - dateOffset);
@@ -157,6 +157,11 @@ class CountryVaccination extends BaseChartComponent {
         .y0(yScale(0)) // set the y values for the line generator
         .curve(d3.curveStepAfter); // apply smoothing to the line
 
+      const line = d3.line()
+        .x(function(d) { return xScale(d.parsedDate); }) // set the x values for the line generator
+        .y(function(d) { return yScale(d.count); }) // set the y values for the line generator
+        .curve(d3.curveStepAfter); // apply smoothing to the line
+
       const numberTicks=[], dateTicks=[];
       // ticks section
       if (data.length<7 && data.length%2!=0 && data[0].count>0) {
@@ -183,6 +188,9 @@ class CountryVaccination extends BaseChartComponent {
             .tickFormat(dateAxisFormat)
         );
 
+      xAxis.selectAll('.tick').filter((d,i)=>i==0).select('text')
+        .attr('text-anchor','start')
+
       xAxisNum.attr('transform', `translate(0,${height+margin.axis})`)
         .call(
           d3.axisBottom(xScaleNum)
@@ -194,18 +202,22 @@ class CountryVaccination extends BaseChartComponent {
         .call(
           d3.axisRight(yScale)
             .tickFormat(d => formatNumber(d))
-            .ticks(4)
+            .ticks(3)
           // .tickSize(-width - margin.right)
         );
 
       this.selection().appendSelect('div.days-label')
-        .style('bottom', `${5}px`)
+        .style('bottom', `${17}px`)
         .style('left', `${0}px`)
         .text(props.text.daysLabel);
 
-      plot.appendSelect('path.vaccinations-line')
+      plot.appendSelect('path.vaccinations-area')
         .attr('d', area(data))
         .style('fill', props.areaFill)
+
+      plot.appendSelect('path.vaccinations-line')
+        .attr('d', line(data))
+        .style('fill','none')
         .style('stroke', props.stroke)
         .style('stroke-width', props.strokeWidth);
 
