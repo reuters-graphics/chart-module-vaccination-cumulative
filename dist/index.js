@@ -3059,8 +3059,8 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
         dateAxis: '%b %e',
         number: '~s'
       },
-      areaFill: 'rgba(238, 195, 49,.6)',
-      stroke: '#EEC331',
+      areaFill: 'rgba(230, 147, 77,.8)',
+      stroke: '#DE7041',
       strokeWidth: 3,
       variable: 'totalDoses',
       countryISO: 'ISR',
