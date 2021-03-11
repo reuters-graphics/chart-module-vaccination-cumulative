@@ -3064,7 +3064,7 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
       strokeWidth: 3,
       variable: 'totalDoses',
       countryISO: 'ISR',
-      milestones: [.05, 0.1, 0.2, 0.3, 0.4, 0.5],
+      milestones: [.05, 0.1, 0.2, 0.3, 0.4, 0.6, 0.8, 1, 1.2, 1.5],
       text: {
         milestone: '{{ number }}% of population',
         milestoneMinor: '{{ number }}%',
@@ -3160,6 +3160,14 @@ var CountryVaccination = /*#__PURE__*/function (_BaseChartComponent) {
           useMilestonePer = milestones[i];
           milestoneIndex = i;
         }
+      }
+
+      if (!useMilestone) {
+        milestones.push(parseInt(d3.max(data, function (d) {
+          return d.perPop;
+        }) * 10) / 20);
+        useMilestone = milestones[milestones.length - 1];
+        milestoneIndex = milestones.length - 1;
       }
 
       var xScale = d3.scaleTime().rangeRound([0, width]).domain([startDate, endDate]);
